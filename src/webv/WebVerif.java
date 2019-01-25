@@ -30,7 +30,10 @@ package webv;
  */
 
 
-import java.util.List;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Defines a WebVerif
@@ -39,24 +42,43 @@ import java.util.List;
  * Created on: 2019 - January - 25 at 09:14
  * Part of TP3's {@link webv} package
  */
-public class WebVerif implements Runnable{
+public class WebVerif implements Callable<Integer> {
 
 
     private String website;
+    private CountDownLatch latch;
 
-    public WebVerif(String website) {
 
-        this.website = this.website;
+    public WebVerif(String website, CountDownLatch latch) {
+
+        this.website = website;
+        this.latch = latch;
     }
 
+
     @Override
-    public void run() {
+    public Integer call() throws Exception {
 
         System.setProperty("http.proxyHost","IP");
         System.setProperty("http.proxyPort", "8080");
 
+        try {
+            var url = new URL(website);
 
-        
+            var connection = (HttpURLConnection)url.openConnection();
 
+            var status = connection.getResponseCode();
+
+
+            latch.countDown();
+
+            return status;
+
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
+        return -1;
     }
 }
