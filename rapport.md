@@ -458,7 +458,7 @@ On devrait faire un block synchronized à chaque affection dans la collection de
 
 ## Question D
 
-Il faudrait maintenant utiliser une Hashtable, qui mémorisera le numéro du singe en tant que clé et la liste de bananes collectées en valeurs pour chaque clé. Si on utilise une Hashtable, elle sera ThreadSafe. 
+Il faudrait maintenant utiliser une ConcurrentHashMap, qui mémorisera le numéro du singe en tant que clé et la liste de bananes collectées en valeurs pour chaque clé. Si on utilise une Hashtable, elle sera ThreadSafe. 
 
 En ce qui concerne le singe, il peut utiliser une ArrayList pour les bananes puisque chaque thread aura sa propre liste et ne sera donc pas une ressource partagée.
 
@@ -494,6 +494,87 @@ public class Singe implements Callable<List<Banane>> {
 }
 
 ``
+
+Ramasseur.java:
+
+```
+public class Ramasseur {
+
+
+    private static Integer numberOfBananasCollected;
+    private static ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+
+    public static void main(String[] args) {
+
+        CountDownLatch barriere = new CountDownLatch(10);
+
+
+        var bananes = new ConcurrentHashMap<Integer, List<Banane>>();
+
+        var singes = new ArrayList<Singe>();
+
+
+        var tasks = new ArrayList<FutureTask<List<Banane>>>();
+
+        for (int i = 0; i < 10; i++) {
+            singes.add(new Singe(barriere));
+        }
+
+
+        singes.forEach(s -> {
+
+            var singeTask = new FutureTask<>(s);
+            tasks.add(singeTask);
+            executorService.execute(singeTask);
+
+        });
+
+
+        while (true) {
+
+
+            for (int i = 0; i < 10; i++) {
+
+                try {
+                    if (tasks.get(i).isDone()) {
+
+                        var b = tasks.get(i).get();
+
+                        bananes.put(i, b);
+
+                        System.out.println("Le singe " + i + " a collecte " + b.size() + " bananes");
+
+                    }
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
+
+            try {
+                barriere.await();
+
+
+                for (var b : bananes) {
+                    numberOfBananasCollected++;
+                }
+
+
+                System.out.println("Le nombre total de bananes est " + numberOfBananasCollected);
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+
+    }
+}
+
+```
 
 
 
