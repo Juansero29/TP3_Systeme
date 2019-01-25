@@ -287,3 +287,183 @@ public class WebVerif implements Callable<Integer> {
 }
 ```
 
+
+### 2. ExecutorService, Callable et FutureTask
+
+## Question A
+
+
+Pour (2), on va stocker dans une collection à l'index i, le nombre de bananes collectées (modélisées ici par un chiffre) par le singe i.  Quelle classe allez vous utiliser et pourquoi?
+
+
+J'utilise la classe Vector<Integer> puisque cette liste sera une ressource partagée pour les singes, on mettra dedans le nombre de bananes collectées par un singe à chaque fois qu'il a fini de collecter, mais si jamais deux singes finissent au même temps, on veut pas que la liste soit accessible en écriture pour les deux ou + singes. Le vector assure une exclusion mutuelle
+
+
+## Question B
+
+Quelle est la solution que vous avez retenue pour effectuer la tache "addition de bananes"?
+
+
+
+J'utilise une barrière "CountDownLatch"  pour que chaque singe décrémente le compteur de un. Une fois le compteur est à zéro, on sait que tous les singes on fini et on pourra compter le nombre total de bananes.
+
+Singe.java:
+```
+
+import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+
+/**
+ * Defines a Singe
+ *
+ * @author Juan
+ * Created on: 2019 - January - 25 at 10:10
+ * Part of TP3_Systeme's {@link singes} package
+ */
+public class Singe implements Callable<Integer> {
+
+    private CountDownLatch cdl;
+
+    public Singe(CountDownLatch barriere) {
+        cdl = barriere;
+    }
+
+    @Override
+    public Integer call() throws Exception {
+
+         var r = new Random();
+         var bananes = r.nextInt(10);
+
+         cdl.countDown();
+
+         return bananes;
+
+    }
+
+
+}
+
+
+```
+
+Ramasseur.java:
+
+```
+
+
+import java.util.ArrayList;
+import java.util.Vector;
+import java.util.concurrent.*;
+
+/**
+ * Defines a Ramasseur
+ *
+ * @author Juan
+ * Created on: 2019 - January - 25 at 10:18
+ * Part of TP3_Systeme's {@link singes} package
+ */
+public class Ramasseur {
+
+
+    private static Integer numberOfBananasCollected;
+    private static ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+
+    public static void main(String[] args) {
+
+        CountDownLatch barriere = new CountDownLatch(10);
+
+
+        var bananes = new Vector<Integer>();
+        
+        var singes = new ArrayList<Singe>();
+
+
+        var tasks = new ArrayList<FutureTask<Integer>>();
+
+        for (int i = 0; i < 10; i++) {
+            singes.add(new Singe(barriere));
+        }
+
+
+        singes.forEach(s -> {
+
+            var singeTask = new FutureTask<>(s);
+            tasks.add(singeTask);
+            executorService.execute(singeTask);
+
+        });
+
+
+        while(true)
+        {
+
+
+            for (int i = 0; i < 10 ; i++) {
+
+                try {
+                    if (tasks.get(i).isDone()) {
+
+                        var b = tasks.get(i).get();
+
+                        bananes.add(i, b);
+
+                        System.out.println("Le singe " + i + " a collecte " + b + " bananes");
+
+                    }
+                } catch(InterruptedException | ExecutionException e)
+                {
+                    e.printStackTrace();
+                }
+
+            }
+
+
+            try {
+                barriere.await();
+
+                
+
+                for (var b: bananes) {
+                    numberOfBananasCollected += b;
+                }
+
+
+                System.out.println("Le nombre total de bananes est " + numberOfBananasCollected);
+
+            } catch(InterruptedException  e)
+            {
+                e.printStackTrace();
+            }
+
+        }
+
+
+
+
+    }
+}
+
+```
+
+
+
+## Question C
+
+
+On devrait faire un block synchronized à chaque affection dans la collection de bananes pour éviter que deux singes affectent les bananes collectées au même temps. 
+
+
+
+
+
+
+
+## Question D
+
+
+
+
+
+

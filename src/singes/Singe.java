@@ -28,7 +28,9 @@ package singes;/*
  */
 
 
+import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Defines a Singe
@@ -37,7 +39,25 @@ import java.util.concurrent.Callable;
  * Created on: 2019 - January - 25 at 10:10
  * Part of TP3_Systeme's {@link singes} package
  */
-public class Singe implements Callable<> {
+public class Singe implements Callable<Integer> {
+
+    private CountDownLatch cdl;
+
+    public Singe(CountDownLatch barriere) {
+        cdl = barriere;
+    }
+
+    @Override
+    public Integer call() throws Exception {
+
+         var r = new Random();
+         var bananes = r.nextInt(10);
+
+         cdl.countDown();
+
+         return bananes;
+
+    }
 
 
 }
