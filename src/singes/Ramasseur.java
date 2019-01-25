@@ -29,6 +29,7 @@ package singes;/*
 
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.*;
 
@@ -51,12 +52,12 @@ public class Ramasseur {
         CountDownLatch barriere = new CountDownLatch(10);
 
 
-        var bananes = new Vector<Integer>();
+        var bananes = new ConcurrentHashMap<Integer, List<Banane>>();
 
         var singes = new ArrayList<Singe>();
 
 
-        var tasks = new ArrayList<FutureTask<Integer>>();
+        var tasks = new ArrayList<FutureTask<List<Banane>>>();
 
         for (int i = 0; i < 10; i++) {
             singes.add(new Singe(barriere));
@@ -72,24 +73,22 @@ public class Ramasseur {
         });
 
 
-        while(true)
-        {
+        while (true) {
 
 
-            for (int i = 0; i < 10 ; i++) {
+            for (int i = 0; i < 10; i++) {
 
                 try {
                     if (tasks.get(i).isDone()) {
 
                         var b = tasks.get(i).get();
 
-                        bananes.add(i, b);
+                        bananes.put(i, b);
 
-                        System.out.println("Le singe " + i + " a collecte " + b + " bananes");
+                        System.out.println("Le singe " + i + " a collecte " + b.size() + " bananes");
 
                     }
-                } catch(InterruptedException | ExecutionException e)
-                {
+                } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
                 }
 
@@ -100,22 +99,18 @@ public class Ramasseur {
                 barriere.await();
 
 
-
-                for (var b: bananes) {
-                    numberOfBananasCollected += b;
+                for (var b : bananes) {
+                    numberOfBananasCollected++;
                 }
 
 
                 System.out.println("Le nombre total de bananes est " + numberOfBananasCollected);
 
-            } catch(InterruptedException  e)
-            {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
         }
-
-
 
 
     }

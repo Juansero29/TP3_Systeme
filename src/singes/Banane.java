@@ -28,42 +28,12 @@ package singes;/*
  */
 
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-
 /**
- * Defines a Singe
+ * Defines a Banane
  *
  * @author Juan
- * Created on: 2019 - January - 25 at 10:10
+ * Created on: 2019 - January - 25 at 10:50
  * Part of TP3_Systeme's {@link singes} package
  */
-public class Singe implements Callable<List<Banane>> {
-
-    private CountDownLatch cdl;
-
-    public Singe(CountDownLatch barriere) {
-        cdl = barriere;
-    }
-
-    @Override
-    public List<Banane> call() throws Exception {
-
-        var r = new Random();
-        var nbBananes = r.nextInt(10);
-        var bananes = new ArrayList<Banane>();
-
-        for (int i = 0; i < nbBananes; i++) {
-            bananes.add(new Banane());
-        }
-        cdl.countDown();
-
-        return bananes;
-
-    }
-
-
+public class Banane {
 }
